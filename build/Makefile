@@ -14,15 +14,15 @@ BIN = gltest
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(INC)/%.hpp
 	@mkdir -p obj
-	$(CXX) $(CFLAGS) -c $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 
 $(OBJ)/%.o: $(SRC)/%.cpp
 	@mkdir -p obj
-	$(CXX) $(CFLAGS) -c $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
 
 $(BIN): $(OBJS)
 	$(CXX) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
 	
-.PHONY: run
-run:
-	./$(BIN)
+.PHONY: clean
+clean:
+	rm -rf $(BIN) $(OBJ)

@@ -6,123 +6,61 @@
 #include <EGL/egl.h>
 
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 
 #include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <string>
 
-// Index to bind the attributes to vertex shaders
-const unsigned int VertexArray	= 0;
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
-bool testEGLError(const char* functionLastCalled) {
+#include "egl_init.hpp"
 
-	EGLint lastError = eglGetError();
-	if (lastError != EGL_SUCCESS) {
-		printf("%s failed (%x).\n", functionLastCalled, lastError);
-		return false;
-	}
+GLuint load_texture(const std::string filename) {
 
-	return true;
-}
+    int width, height, channels;
 
-bool testGLError(const char* functionLastCalled) {
+    stbi_uc *pixels = stbi_load(
+            filename.c_str(),
+            &width,
+            &height,
+            &channels,
+            STBI_rgb_alpha
+        );
 
-	GLenum lastError = glGetError();
-	if (lastError != GL_NO_ERROR) {
-		printf("%s failed (%x).\n", functionLastCalled, lastError);
-		return false;
-	}
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
 
-	return true;
-}
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-bool createEGLDisplay(EGLDisplay& eglDisplay) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-	eglDisplay = eglGetDisplay((EGLNativeDisplayType)0);
-	if (eglDisplay == EGL_NO_DISPLAY) {
-		printf("Failed to get an EGLDisplay");
-		return false;
-	}
+    stbi_image_free(pixels);
 
-	EGLint eglMajorVersion = 0;
-	EGLint eglMinorVersion = 0;
-	if (!eglInitialize(eglDisplay, &eglMajorVersion, &eglMinorVersion)) {
-		printf("Failed to initialize the EGLDisplay");
-		return false;
-	}
-	
-	int result = EGL_FALSE;
-
-	result = eglBindAPI(EGL_OPENGL_ES_API);
-
-	if (result != EGL_TRUE) {
-		return false;
-	}
-
-	return true;
-}
-
-bool chooseEGLConfig(EGLDisplay eglDisplay, EGLConfig& eglConfig) {
-
-	const EGLint configurationAttributes[] = {
-        EGL_SURFACE_TYPE,		EGL_WINDOW_BIT,
-        EGL_RENDERABLE_TYPE,	EGL_OPENGL_ES2_BIT,
-        EGL_NONE
-	};
-
-	EGLint configsReturned;
-	if (!eglChooseConfig(eglDisplay, configurationAttributes, &eglConfig, 1, &configsReturned) || (configsReturned != 1)) {
-		printf("Failed to choose a suitable config.");
-		return false;
-	}
-
-	return true;
-}
-
-bool createEGLSurface(EGLDisplay eglDisplay, EGLConfig eglConfig, EGLSurface& eglSurface) {
-	eglSurface = eglCreateWindowSurface(eglDisplay, eglConfig, (EGLNativeWindowType)0, NULL);
-
-	if (!testEGLError("eglCreateWindowSurface"))
-        return false;
-
-	return true;
-}
-
-bool setupEGLContext(EGLDisplay eglDisplay, EGLConfig eglConfig, EGLSurface eglSurface, EGLContext& context) {
-
-	eglBindAPI(EGL_OPENGL_ES_API);
-	if (!testEGLError("eglBindAPI"))
-        return false;
-
-	EGLint contextAttributes[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 2,
-		EGL_NONE
-	};
-
-	context = eglCreateContext(eglDisplay, eglConfig, NULL, contextAttributes);
-	if (!testEGLError("eglCreateContext"))
-        return false;
-
-	eglMakeCurrent(eglDisplay, eglSurface, eglSurface, context);
-	
-	if (!testEGLError("eglMakeCurrent"))
-        return false;
-
-	return true;
+    return texture;
 }
 
 bool initializeBuffer(GLuint& vertexBuffer) {
 
 	GLfloat vertexData[] = { 
-        -0.4f, -0.4f,  0.0f, 1.0f, 0.0f, 0.0f,
-         0.4f, -0.4f,  0.0f, 0.0f, 1.0f, 0.0f,
-         0.0f,  0.4f,  0.0f, 0.0f, 0.0f, 1.0f,
+        // XYZ                // COLOR
+        -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 0.0f,//   0.0f, 0.0f,    // bottom left
+         0.5f, -0.5f,  0.0f,  0.0f, 1.0f, 1.0f,//   0.0f, 0.0f,    // bottom right
+         0.5f,  0.5f,  0.0f,  0.0f, 0.0f, 1.0f,//   0.0f, 0.0f,    // top right
+
+         0.5f,  0.5f,  0.0f,  0.0f, 0.0f, 1.0f,//   0.0f, 0.0f,    // top right
+        -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,//   0.0f, 0.0f,    // top left
+        -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 0.0f,//   0.0f, 0.0f,    // bottom left
     };
 
 	glGenBuffers(1, &vertexBuffer);
-
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
@@ -220,7 +158,6 @@ GLuint load_shader(const std::string &filename, GLenum shader_type) {
 
 bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& shader_program) {
 
-    // std::string base = "examples/OpenGLES/01_HelloAPI/";
     std::string base = "../";
 
     std::string vshader_path = base + "shaders/simple.vert";
@@ -236,6 +173,7 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 
 	glBindAttribLocation(shader_program, 0, "position");
 	glBindAttribLocation(shader_program, 1, "color");
+	glBindAttribLocation(shader_program, 2, "tex_coord");
 	glLinkProgram(shader_program);
 
     print_program_status(shader_program);
@@ -248,12 +186,13 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 	return true;
 }
 
-bool renderScene(GLuint shaderProgram, EGLDisplay eglDisplay, EGLSurface eglSurface) {
+bool render(GLuint shaderProgram, EGLDisplay eglDisplay, EGLSurface eglSurface) {
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
+    /*
 	int matrixLocation = glGetUniformLocation(shaderProgram, "transformationMatrix");
 
 	const float transformationMatrix[] = {
@@ -266,31 +205,26 @@ bool renderScene(GLuint shaderProgram, EGLDisplay eglDisplay, EGLSurface eglSurf
 	glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, transformationMatrix);
 	if (!testGLError("glUniformMatrix4fv"))
         return false;
+    */
 
+    // position
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), 0);
 
+    // colour
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (GLvoid *) (3*sizeof(float)));
+
+    // texture coordinate
+    // glEnableVertexAttribArray(2);
+    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (GLvoid *) (6*sizeof(float)));
 
 	if (!testGLError("glVertexAttribPointer"))
         return false;
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
 	if (!testGLError("glDrawArrays"))
         return false;
-
-    /*
-    if(isGlExtensionSupported("GL_EXT_discard_framebuffer")) {
-        GLenum invalidateAttachments[2];
-        invalidateAttachments[0] = GL_DEPTH_EXT;
-        invalidateAttachments[1] = GL_STENCIL_EXT;
-
-        glDiscardFramebufferEXT(GL_FRAMEBUFFER, 2, &invalidateAttachments[0]);
-        if (!testGLError("glDiscardFramebufferEXT"))
-            return false;
-    }
-    */
 
     if (!eglSwapBuffers(eglDisplay, eglSurface)) {
         testEGLError("eglSwapBuffers");
@@ -300,7 +234,7 @@ bool renderScene(GLuint shaderProgram, EGLDisplay eglDisplay, EGLSurface eglSurf
     return true;
 }
 
-void deInitializeGLState(GLuint vertex_shader, GLuint fragment_shader, GLuint shader_program, GLuint vertexBuffer) {
+void destroy_state(GLuint vertex_shader, GLuint fragment_shader, GLuint shader_program, GLuint vertexBuffer) {
 
 	glDeleteShader(fragment_shader);
 	glDeleteShader(vertex_shader);
@@ -309,18 +243,11 @@ void deInitializeGLState(GLuint vertex_shader, GLuint fragment_shader, GLuint sh
 	glDeleteBuffers(1, &vertexBuffer);
 }
 
-void releaseEGLState(EGLDisplay eglDisplay) {
-
-	eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-	eglTerminate(eglDisplay);
-}
-
 int main(int /*argc*/, char** /*argv*/) {
 
-    EGLDisplay eglDisplay = NULL;
-    EGLConfig eglConfig = NULL;
-    EGLSurface eglSurface = NULL;
+    EGLDisplay display = NULL;
+    EGLConfig config = NULL;
+    EGLSurface surface = NULL;
     EGLContext context = NULL;
 
 	// Handles for the two shaders used to draw the triangle, and the program handle which combines them.
@@ -330,34 +257,23 @@ int main(int /*argc*/, char** /*argv*/) {
 	// A vertex buffer object to store our model data.
 	GLuint vertexBuffer = 0;
 
-	if (!createEGLDisplay(eglDisplay))
-        goto cleanup;
-
-	if (!chooseEGLConfig(eglDisplay, eglConfig))
-        goto cleanup;
-
-	if (!createEGLSurface(eglDisplay, eglConfig, eglSurface))
-        goto cleanup;
-
-	if (!setupEGLContext(eglDisplay, eglConfig, eglSurface, context))
-        goto cleanup;
+    if (!egl_init(display, config, surface, context))
+        egl_cleanup(display);
 
 	if (!initializeBuffer(vertexBuffer))
-        goto cleanup;
+        egl_cleanup(display);
 
 	if (!initializeShaders(vertex_shader, fragment_shader, shader_program))
-        goto cleanup;
+        egl_cleanup(display);
 
 	for (int i = 0; i < 800; ++i) {
 
-		if (!renderScene(shader_program, eglDisplay, eglSurface))
+		if (!render(shader_program, display, surface))
             break;
 
     }
 
-	deInitializeGLState(vertex_shader, fragment_shader, shader_program, vertexBuffer);
+	destroy_state(vertex_shader, fragment_shader, shader_program, vertexBuffer);
 
-cleanup:
-	releaseEGLState(eglDisplay);
 	return 0;
 }
