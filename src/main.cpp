@@ -50,14 +50,14 @@ GLuint load_texture(const std::string filename) {
 bool initializeBuffer(GLuint& vertexBuffer) {
 
 	GLfloat vertexData[] = { 
-        // XYZ                // COLOR
-        -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 0.0f,//   0.0f, 0.0f,    // bottom left
-         0.5f, -0.5f,  0.0f,  0.0f, 1.0f, 1.0f,//   0.0f, 0.0f,    // bottom right
-         0.5f,  0.5f,  0.0f,  0.0f, 0.0f, 1.0f,//   0.0f, 0.0f,    // top right
+        // XYZ                COLOR              TEX COORD
+        -0.5f,  0.5f,  0.0f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,    // top left
+        -0.5f, -0.5f,  0.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,    // bottom left
+         0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,    // bottom right
 
-         0.5f,  0.5f,  0.0f,  0.0f, 0.0f, 1.0f,//   0.0f, 0.0f,    // top right
-        -0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 0.0f,//   0.0f, 0.0f,    // top left
-        -0.5f, -0.5f,  0.0f,  1.0f, 0.0f, 0.0f,//   0.0f, 0.0f,    // bottom left
+         0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,    // bottom right
+         0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,    // top right
+        -0.5f,  0.5f,  0.0f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,    // top left
     };
 
 	glGenBuffers(1, &vertexBuffer);
@@ -69,53 +69,6 @@ bool initializeBuffer(GLuint& vertexBuffer) {
         return false;
 
 	return true;
-}
-
-void print_shader_status(GLuint shader, GLenum shader_type) {
-
-	GLint is_compiled;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
-
-	if (!is_compiled) {
-
-		int len, written;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-
-		std::vector<char> log;
-        log.resize(len);
-		glGetShaderInfoLog(shader, len, &written, log.data());
-
-        std::string type_string;
-        switch (shader_type) {
-        case GL_VERTEX_SHADER:
-            type_string = "vertex";
-            break;
-        case GL_FRAGMENT_SHADER:
-            type_string = "fragment";
-            break;
-        }
-
-		printf("%s shader: %s", type_string.c_str(), len > 1 ? log.data() : "failed to compile.");
-	}
-
-}
-
-void print_program_status(GLuint program) {
-
-	GLint isLinked;
-	glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-
-	if (!isLinked) {
-
-		int infoLogLength, charactersWritten;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-		std::vector<char> infoLog; infoLog.resize(infoLogLength);
-		glGetProgramInfoLog(program, infoLogLength, &charactersWritten, infoLog.data());
-
-		printf("%s", infoLogLength > 1 ? infoLog.data() : "Failed to link shader program.");
-	}
-
 }
 
 std::vector<char> read_file(const std::string &filename) {
@@ -136,6 +89,57 @@ std::vector<char> read_file(const std::string &filename) {
 
     file.close();
     return buffer;
+
+}
+
+void print_shader_status(GLuint shader, GLenum shader_type) {
+
+	GLint is_compiled;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+
+	if (!is_compiled) {
+
+		int len, written;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+
+        char log[len];
+		glGetShaderInfoLog(shader, len, &written, log);
+
+
+		// std::vector<char> log(len);
+		// glGetShaderInfoLog(shader, len, &written, log.data());
+        // std::string error(log.begin(), log.end());
+
+        std::string type_string;
+        switch (shader_type) {
+        case GL_VERTEX_SHADER:
+            type_string = "vertex";
+            break;
+        case GL_FRAGMENT_SHADER:
+            type_string = "fragment";
+            break;
+        }
+
+		printf("%s shader failed to compile: %s\n", type_string.c_str(), log);
+	}
+
+}
+
+void print_program_status(GLuint program) {
+
+	GLint isLinked;
+	glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
+
+	if (!isLinked) {
+
+		int infoLogLength, charactersWritten;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+		std::vector<char> infoLog; infoLog.resize(infoLogLength);
+		glGetProgramInfoLog(program, infoLogLength, &charactersWritten, infoLog.data());
+
+		printf("%s", infoLogLength > 1 ? infoLog.data() : "Failed to link shader program.");
+	}
 
 }
 
@@ -162,7 +166,7 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 
     std::string vshader_path = base + "shaders/simple.vert";
     std::string fshader_path = base + "shaders/simple.frag";
-    
+
     vertex_shader = load_shader(vshader_path, GL_VERTEX_SHADER);
     fragment_shader = load_shader(fshader_path, GL_FRAGMENT_SHADER);
 
@@ -209,20 +213,20 @@ bool render(GLuint shaderProgram, EGLDisplay eglDisplay, EGLSurface eglSurface) 
 
     // position
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
 
     // colour
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (GLvoid *) (3*sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (GLvoid *) (3*sizeof(float)));
 
     // texture coordinate
-    // glEnableVertexAttribArray(2);
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (GLvoid *) (6*sizeof(float)));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (GLvoid *) (6*sizeof(float)));
 
 	if (!testGLError("glVertexAttribPointer"))
         return false;
 
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	if (!testGLError("glDrawArrays"))
         return false;
 
@@ -251,17 +255,20 @@ int main(int /*argc*/, char** /*argv*/) {
     EGLContext context = NULL;
 
 	// Handles for the two shaders used to draw the triangle, and the program handle which combines them.
-	GLuint fragment_shader = 0, vertex_shader = 0;
+	GLuint vertex_shader = 0, fragment_shader = 0;
 	GLuint shader_program = 0;
 
 	// A vertex buffer object to store our model data.
 	GLuint vertexBuffer = 0;
 
-    if (!egl_init(display, config, surface, context))
+    if (!egl_init(display, config, surface, context)) {
         egl_cleanup(display);
+    }
 
 	if (!initializeBuffer(vertexBuffer))
         egl_cleanup(display);
+
+    load_texture("../tex/checkerboard.jpg");
 
 	if (!initializeShaders(vertex_shader, fragment_shader, shader_program))
         egl_cleanup(display);

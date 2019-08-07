@@ -8,7 +8,7 @@ _OBJS = $(wildcard $(SRC)/*.cpp)
 OBJS = $(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(_OBJS))
 
 CFLAGS = -g -std=c++17 -I$(INC)
-LDFLAGS = `pkg-config --static --libs egl gl`
+LDFLAGS = `pkg-config --static --libs egl glesv2`
 
 BIN = gltest
 
