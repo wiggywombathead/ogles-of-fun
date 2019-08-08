@@ -55,11 +55,6 @@ void print_shader_status(GLuint shader, GLenum shader_type) {
         char log[len];
 		glGetShaderInfoLog(shader, len, &written, log);
 
-
-		// std::vector<char> log(len);
-		// glGetShaderInfoLog(shader, len, &written, log.data());
-        // std::string error(log.begin(), log.end());
-
         std::string type_string;
         switch (shader_type) {
         case GL_VERTEX_SHADER:
@@ -143,8 +138,7 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface) {
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     static auto start = std::chrono::high_resolution_clock::now();
     auto current = std::chrono::high_resolution_clock::now();
@@ -154,12 +148,12 @@ bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface)
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::rotate(
             model,
-            time * glm::radians(45.0f),
+            time * glm::radians(0.0f),
             glm::vec3(0,1,0)
         );
 
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0,1,5),
+            glm::vec3(0,0,3),
             glm::vec3(0,0,0),
             glm::vec3(0,1,0)
         );
@@ -198,11 +192,13 @@ void destroy_state(GLuint vertex_shader, GLuint fragment_shader, GLuint shader_p
 }
 
 void gl_init() {
+    glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
 
-    // TODO: glDepthFunc(GL_
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthRangef(0.0f, 1.0f);
 }
 
 int main(int /*argc*/, char** /*argv*/) {
@@ -238,7 +234,30 @@ int main(int /*argc*/, char** /*argv*/) {
         { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} }     // top left
     }, "../tex/checkerboard.jpg");
 
+    Model dickbutt({
+        { {-1.0f,  1.0f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+        { {-1.0f,  0.0f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+        { { 0.0f,  0.0f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+
+        { { 0.0f,  0.0f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+        { { 0.0f,  1.0f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+        { {-1.0f,  1.0f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+    }, "../tex/dickbutt.jpg");
+    
+    Model checkerboard2(
+            {
+                { { 0.0f,  0.0f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },    // top left
+                { { 0.0f, -1.0f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },    // bottom left
+                { { 1.0f, -1.0f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },    // bottom right
+                { { 1.0f,  0.0f,  0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} },    // top right
+            }, 
+            { 0, 1, 2, 2, 3, 0 },
+            "../tex/planks.jpg"
+        );
+
     models.push_back(checkerboard);
+    models.push_back(dickbutt);
+    models.push_back(checkerboard2);
 
 	if (!initializeShaders(vertex_shader, fragment_shader, shader_program))
         egl_cleanup(display);

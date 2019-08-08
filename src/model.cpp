@@ -3,25 +3,42 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <cstdint>
+#include <iostream>
+
 Model::Model(std::vector<Vertex> vertices) {
     mesh = vertices;
+    init_vertex_buffer();
 }
 
-Model::Model(std::vector<Vertex> vertices, std::string texpath) {
-    mesh = vertices;
+Model::Model(std::vector<Vertex> vertices, std::vector<uint16_t> indices) : Model(vertices) {
+    this->indices = indices;
+    indexed = true;
+    init_index_buffer();
+}
+
+Model::Model(std::vector<Vertex> vertices, std::string texpath) : Model(vertices) {
     texture = load_texture(texpath);
+}
 
-    init_vertex_buffer();
-
+Model::Model(std::vector<Vertex> vertices, std::vector<uint16_t> indices, std::string texpath) : Model(vertices, indices) {
+    texture = load_texture(texpath);
 }
 
 GLuint Model::init_vertex_buffer() {
-
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * mesh.size(), mesh.data(), GL_STATIC_DRAW);
 
     return vertex_buffer;
+}
+
+GLuint Model::init_index_buffer() {
+    glGenBuffers(1, &index_buffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indices.size(), indices.data(), GL_STATIC_DRAW);
+
+    return index_buffer;
 }
 
 GLuint Model::load_texture(const std::string filename) {
@@ -61,13 +78,18 @@ void Model::draw() {
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 
-    // // colour
+    // colour
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) (offsetof(Vertex, color)));
 
-    // // texture coordinate
+    // texture coordinate
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) (offsetof(Vertex, texcoord)));
 
-    glDrawArrays(GL_TRIANGLES, 0, mesh.size());
+    if (indexed) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
+    } else {
+        glDrawArrays(GL_TRIANGLES, 0, mesh.size());
+    }
 }
