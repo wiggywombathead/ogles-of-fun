@@ -5,71 +5,21 @@
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
-#include <vector>
-#include <cstdio>
-
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <string>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "egl_init.hpp"
+#include "model.hpp"
 
-GLuint load_texture(const std::string filename) {
+int screen_width, screen_height;
 
-    int width, height, channels;
-
-    stbi_uc *pixels = stbi_load(
-            filename.c_str(),
-            &width,
-            &height,
-            &channels,
-            STBI_rgb_alpha
-        );
-
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
-    stbi_image_free(pixels);
-
-    return texture;
-}
-
-bool initializeBuffer(GLuint& vertexBuffer) {
-
-	GLfloat vertexData[] = { 
-        // XYZ                COLOR              TEX COORD
-        -0.5f,  0.5f,  0.0f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,    // top left
-        -0.5f, -0.5f,  0.0f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,    // bottom left
-         0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,    // bottom right
-
-         0.5f, -0.5f,  0.0f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,    // bottom right
-         0.5f,  0.5f,  0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f,    // top right
-        -0.5f,  0.5f,  0.0f,  1.0f, 0.0f, 0.0f,  0.0f, 1.0f,    // top left
-    };
-
-	glGenBuffers(1, &vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-
-	if (!testGLError("glBufferData"))
-        return false;
-
-	return true;
-}
+std::vector<Model> models;
 
 std::vector<char> read_file(const std::string &filename) {
 
@@ -190,45 +140,45 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 	return true;
 }
 
-bool render(GLuint shaderProgram, EGLDisplay eglDisplay, EGLSurface eglSurface) {
+bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface) {
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
-    /*
-	int matrixLocation = glGetUniformLocation(shaderProgram, "transformationMatrix");
+    static auto start = std::chrono::high_resolution_clock::now();
+    auto current = std::chrono::high_resolution_clock::now();
 
-	const float transformationMatrix[] = {
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
-	glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, transformationMatrix);
-	if (!testGLError("glUniformMatrix4fv"))
-        return false;
-    */
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(
+            model,
+            time * glm::radians(45.0f),
+            glm::vec3(0,1,0)
+        );
 
-    // position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
+    glm::mat4 view = glm::lookAt(
+            glm::vec3(0,1,5),
+            glm::vec3(0,0,0),
+            glm::vec3(0,1,0)
+        );
 
-    // colour
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (GLvoid *) (3*sizeof(float)));
+    glm::mat4 projection = glm::perspective(
+            glm::radians(45.0f),
+            (float) screen_width / (float) screen_height,
+            0.1f,
+            100.0f
+        );
 
-    // texture coordinate
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (GLvoid *) (6*sizeof(float)));
+    glm::mat4 mvp = projection * view * model;
 
-	if (!testGLError("glVertexAttribPointer"))
-        return false;
+    int mvp_handle = glGetUniformLocation(shader_program, "mvp");
+    glUniformMatrix4fv(mvp_handle, 1, GL_FALSE, &mvp[0][0]);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	if (!testGLError("glDrawArrays"))
-        return false;
+    for (auto model : models) {
+        model.draw();
+    }
 
     if (!eglSwapBuffers(eglDisplay, eglSurface)) {
         testEGLError("eglSwapBuffers");
@@ -245,6 +195,14 @@ void destroy_state(GLuint vertex_shader, GLuint fragment_shader, GLuint shader_p
 	glDeleteProgram(shader_program);
 
 	glDeleteBuffers(1, &vertexBuffer);
+}
+
+void gl_init() {
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
+    // TODO: glDepthFunc(GL_
 }
 
 int main(int /*argc*/, char** /*argv*/) {
@@ -265,15 +223,27 @@ int main(int /*argc*/, char** /*argv*/) {
         egl_cleanup(display);
     }
 
-	if (!initializeBuffer(vertexBuffer))
-        egl_cleanup(display);
+    eglQuerySurface(display, surface, EGL_WIDTH, &screen_width);
+    eglQuerySurface(display, surface, EGL_HEIGHT, &screen_height);
 
-    load_texture("../tex/checkerboard.jpg");
+    gl_init();
+
+    Model checkerboard({
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },    // top left
+        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },    // bottom left
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },    // bottom right
+
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },    // bottom right
+        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} },    // top right
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} }     // top left
+    }, "../tex/checkerboard.jpg");
+
+    models.push_back(checkerboard);
 
 	if (!initializeShaders(vertex_shader, fragment_shader, shader_program))
         egl_cleanup(display);
 
-	for (int i = 0; i < 800; ++i) {
+    for (;;) {
 
 		if (!render(shader_program, display, surface))
             break;

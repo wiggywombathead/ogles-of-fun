@@ -16,7 +16,7 @@ bool egl_init(EGLDisplay& display, EGLConfig& config, EGLSurface& surface, EGLCo
 
 bool createEGLDisplay(EGLDisplay& display) {
 
-	display = eglGetDisplay((EGLNativeDisplayType)0);
+	display = eglGetDisplay((EGLNativeDisplayType) 0);
 	if (display == EGL_NO_DISPLAY) {
 		fputs("Failed to get an EGLDisplay", stderr);
 		return false;
