@@ -1,7 +1,3 @@
-// #define DYNAMICGLES_NO_NAMESPACE
-// #define DYNAMICEGL_NO_NAMESPACE
-// #include <DynamicGles.h>
-
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 
@@ -16,98 +12,14 @@
 
 #include "egl_init.hpp"
 #include "model.hpp"
+#include "shader.hpp"
 
 int screen_width, screen_height;
 
 std::vector<Model> models;
 
-std::vector<char> read_file(const std::string &filename) {
-
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("could not open file");
-    }
-
-    size_t filesize = (size_t) file.tellg();
-    std::vector<char> buffer(filesize);
-
-    file.seekg(0);
-    file.read(buffer.data(), filesize);
-
-    std::cout << "Read GLSL shader " << filename << " of size " << filesize << " bytes" << std::endl;
-
-    file.close();
-    return buffer;
-
-}
-
-void print_shader_status(GLuint shader, GLenum shader_type) {
-
-	GLint is_compiled;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
-
-	if (!is_compiled) {
-
-		int len, written;
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-
-        char log[len];
-		glGetShaderInfoLog(shader, len, &written, log);
-
-        std::string type_string;
-        switch (shader_type) {
-        case GL_VERTEX_SHADER:
-            type_string = "vertex";
-            break;
-        case GL_FRAGMENT_SHADER:
-            type_string = "fragment";
-            break;
-        }
-
-		printf("%s shader failed to compile: %s\n", type_string.c_str(), log);
-	}
-
-}
-
-void print_program_status(GLuint program) {
-
-	GLint isLinked;
-	glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-
-	if (!isLinked) {
-
-		int infoLogLength, charactersWritten;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
-
-		std::vector<char> infoLog; infoLog.resize(infoLogLength);
-		glGetProgramInfoLog(program, infoLogLength, &charactersWritten, infoLog.data());
-
-		printf("%s", infoLogLength > 1 ? infoLog.data() : "Failed to link shader program.");
-	}
-
-}
-
-GLuint load_shader(const std::string &filename, GLenum shader_type) {
-
-    GLuint shader = glCreateShader(shader_type);
-
-    std::vector<char> source = read_file(filename);
-    std::string src(source.begin(), source.end());
-    const char *char_array = src.c_str();
-
-    GLint length = source.size();
-    glShaderSource(shader, 1, &char_array, &length);
-    glCompileShader(shader);
-
-    print_shader_status(shader, shader_type);
-
-    return shader;
-}
-
+/*
 bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& shader_program) {
-
-    std::string base = "../";
 
     std::string vshader_path = base + "shaders/simple.vert";
     std::string fshader_path = base + "shaders/simple.frag";
@@ -120,20 +32,17 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 	glAttachShader(shader_program, vertex_shader);
 	glAttachShader(shader_program, fragment_shader);
 
-	glBindAttribLocation(shader_program, 0, "position");
-	glBindAttribLocation(shader_program, 1, "color");
-	glBindAttribLocation(shader_program, 2, "tex_coord");
-	glLinkProgram(shader_program);
-
     print_program_status(shader_program);
 
 	glUseProgram(shader_program);
 
-	if (!testGLError("glUseProgram"))
+	if (!testGLError("glUseProgram")) {
         return false;
+    }
 
 	return true;
 }
+*/
 
 bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface) {
 
@@ -146,10 +55,9 @@ bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface)
     float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(
+    model = glm::translate(
             model,
-            time * glm::radians(0.0f),
-            glm::vec3(0,1,0)
+            glm::vec3(0.0f) + sinf(time) * glm::vec3(0,0,2)
         );
 
     glm::mat4 view = glm::lookAt(
@@ -170,6 +78,7 @@ bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface)
     int mvp_handle = glGetUniformLocation(shader_program, "mvp");
     glUniformMatrix4fv(mvp_handle, 1, GL_FALSE, &mvp[0][0]);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     for (auto model : models) {
         model.draw();
     }
@@ -199,6 +108,31 @@ void gl_init() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDepthRangef(0.0f, 1.0f);
+}
+
+GLuint create_framebuffer() {
+    GLuint framebuffer;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, , screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // now attach the texture to the framebuffer
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+    // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+        
+    }
 }
 
 int main(int /*argc*/, char** /*argv*/) {
@@ -243,24 +177,27 @@ int main(int /*argc*/, char** /*argv*/) {
         { { 0.0f,  1.0f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
         { {-1.0f,  1.0f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
     }, "../tex/dickbutt.jpg");
-    
-    Model checkerboard2(
-            {
-                { { 0.0f,  0.0f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },    // top left
-                { { 0.0f, -1.0f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },    // bottom left
-                { { 1.0f, -1.0f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },    // bottom right
-                { { 1.0f,  0.0f,  0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} },    // top right
-            }, 
-            { 0, 1, 2, 2, 3, 0 },
-            "../tex/planks.jpg"
-        );
+
+    Model bricks({
+            { { 0.0f,  0.0f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },    // top left
+            { { 0.0f, -1.0f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },    // bottom left
+            { { 1.0f, -1.0f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },    // bottom right
+            { { 1.0f,  0.0f,  0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} },    // top right
+        }, 
+        { 0, 1, 2, 2, 3, 0 }, 
+        "../tex/bricks.png"
+    );
 
     models.push_back(checkerboard);
     models.push_back(dickbutt);
-    models.push_back(checkerboard2);
+    models.push_back(bricks);
 
-	if (!initializeShaders(vertex_shader, fragment_shader, shader_program))
-        egl_cleanup(display);
+    Shader simple("simple.vert", "simple.frag");
+    simple.bind_attrib(0, "position");
+    simple.bind_attrib(1, "color");
+    simple.bind_attrib(2, "tex_coord");
+    simple.link();
+    simple.use();
 
     for (;;) {
 
@@ -270,6 +207,8 @@ int main(int /*argc*/, char** /*argv*/) {
     }
 
 	destroy_state(vertex_shader, fragment_shader, shader_program, vertexBuffer);
+
+    // TODO: clean up all buffers when done 
 
 	return 0;
 }
