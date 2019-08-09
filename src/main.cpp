@@ -10,6 +10,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <unistd.h>
 #include "egl_init.hpp"
 #include "model.hpp"
 #include "shader.hpp"
@@ -58,7 +59,7 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     shader.use();
 
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0,0,3),
+            glm::vec3(0,0,5),
             glm::vec3(0,0,0),
             glm::vec3(0,1,0)
         );
@@ -73,12 +74,15 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     glm::mat4 mvp;
 
     models[0].load_identity();
-    models[0].translate(glm::vec3(0, 0, sinf(time) * 1.0f));
-    models[0].rotate(time * 45.0f, glm::vec3(0,0,1));
+    
+    float factor = time > 5.f ? 5.f : time;
+    models[0].translate(glm::vec3(0, 0, 0 - factor));
+    models[0].scale(glm::vec3(2.0f));
     mvp = projection * view * models[0].get_model_matrix();
     shader.set_mat4("mvp", mvp);
     models[0].draw();
 
+    /*
     models[1].load_identity();
     models[1].rotate(time * 45.0f, glm::vec3(1,0,0));
     mvp = projection * view * models[1].get_model_matrix();
@@ -92,7 +96,6 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     shader.set_mat4("mvp", mvp);
     models[2].draw();
 
-    /*
     for (auto model : models) {
         model.draw();
     }
@@ -210,6 +213,8 @@ int main(int /*argc*/, char** /*argv*/) {
     simple.bind_attrib(1, "color");
     simple.bind_attrib(2, "tex_coord");
     simple.link();
+
+    usleep(6000000);
 
     for (;;) {
 

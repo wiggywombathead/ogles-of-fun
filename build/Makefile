@@ -8,17 +8,23 @@ _OBJS = $(wildcard $(SRC)/*.cpp)
 OBJS = $(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(_OBJS))
 
 CFLAGS = -g -std=c++17 -I$(INC)
-LDFLAGS = -L/root/angle/out/Trace/ -lEGL -lGLESv2#`pkg-config --static --libs egl glesv2`
+LDFLAGS = -L/root/angle/out/Trace/ `pkg-config --static --libs egl glesv2`
+
+DIRECTIVES = 
+
+ifeq ($(MIP),1)
+	DIRECTIVES += -DUSE_MIPMAPS
+endif
 
 BIN = gltest
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(INC)/%.hpp
 	@mkdir -p obj
-	$(CXX) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -c $< -o $@ $(DIRECTIVES) $(LDFLAGS)
 
 $(OBJ)/%.o: $(SRC)/%.cpp
 	@mkdir -p obj
-	$(CXX) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -c $< -o $@ $(DIRECTIVES) $(LDFLAGS)
 
 $(BIN): $(OBJS)
 	$(CXX) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)

@@ -12,3 +12,33 @@ EVENT: GetString(GLenum name = 0x7500)
 
 EVENT: GetString(GLenum name = 0x7500)
 
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
+EVENT: GetString(GLenum name = 0x7500)
+
