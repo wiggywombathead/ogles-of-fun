@@ -44,21 +44,18 @@ bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& s
 }
 */
 
-bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface) {
+void render(Shader shader, EGLDisplay display, EGLSurface surface) {
 
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     static auto start = std::chrono::high_resolution_clock::now();
     auto current = std::chrono::high_resolution_clock::now();
-
     float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(
-            model,
-            glm::vec3(0.0f) + sinf(time) * glm::vec3(0,0,2)
-        );
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    shader.use();
 
     glm::mat4 view = glm::lookAt(
             glm::vec3(0,0,3),
@@ -73,22 +70,38 @@ bool render(GLuint shader_program, EGLDisplay eglDisplay, EGLSurface eglSurface)
             100.0f
         );
 
-    glm::mat4 mvp = projection * view * model;
+    glm::mat4 mvp;
 
-    int mvp_handle = glGetUniformLocation(shader_program, "mvp");
-    glUniformMatrix4fv(mvp_handle, 1, GL_FALSE, &mvp[0][0]);
+    models[0].load_identity();
+    models[0].translate(glm::vec3(0, 0, sinf(time) * 1.0f));
+    models[0].rotate(time * 45.0f, glm::vec3(0,0,1));
+    mvp = projection * view * models[0].get_model_matrix();
+    shader.set_mat4("mvp", mvp);
+    models[0].draw();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    models[1].load_identity();
+    models[1].rotate(time * 45.0f, glm::vec3(1,0,0));
+    mvp = projection * view * models[1].get_model_matrix();
+    shader.set_mat4("mvp", mvp);
+    models[1].draw();
+
+    models[2].load_identity();
+    models[2].scale(glm::vec3(0.5f));
+    models[2].translate(glm::vec3(0+sinf(time), 0+cosf(time), 0));
+    mvp = projection * view * models[2].get_model_matrix();
+    shader.set_mat4("mvp", mvp);
+    models[2].draw();
+
+    /*
     for (auto model : models) {
         model.draw();
     }
+    */
 
-    if (!eglSwapBuffers(eglDisplay, eglSurface)) {
+    if (!eglSwapBuffers(display, surface)) {
         testEGLError("eglSwapBuffers");
-        return false;
     }
 
-    return true;
 }
 
 void destroy_state(GLuint vertex_shader, GLuint fragment_shader, GLuint shader_program, GLuint vertexBuffer) {
@@ -197,12 +210,10 @@ int main(int /*argc*/, char** /*argv*/) {
     simple.bind_attrib(1, "color");
     simple.bind_attrib(2, "tex_coord");
     simple.link();
-    simple.use();
 
     for (;;) {
 
-		if (!render(shader_program, display, surface))
-            break;
+        render(simple, display, surface);
 
     }
 

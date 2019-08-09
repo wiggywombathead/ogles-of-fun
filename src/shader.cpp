@@ -1,5 +1,6 @@
 #include "shader.hpp"
 
+#include <glm/gtc/type_ptr.hpp>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -67,6 +68,11 @@ void Shader::link() {
 
 void Shader::use() {
     glUseProgram(handle);
+}
+
+void Shader::set_mat4(std::string variable, glm::mat4 matrix) {
+    GLint matrix_handle = glGetUniformLocation(handle, variable.c_str());
+    glUniformMatrix4fv(matrix_handle, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
 void Shader::print_compile_status(GLenum shader_type) {

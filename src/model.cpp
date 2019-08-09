@@ -3,6 +3,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <glm/gtx/transform.hpp>
+
 #include <cstdint>
 #include <iostream>
 
@@ -76,6 +78,26 @@ GLuint Model::load_texture(const std::string filename) {
     stbi_image_free(pixels);
 
     return texture;
+}
+
+glm::mat4 Model::get_model_matrix() {
+    return model_matrix;
+}
+
+void Model::rotate(float degrees, glm::vec3 axis) {
+    model_matrix = glm::rotate(model_matrix, glm::radians(degrees), axis);
+}
+
+void Model::translate(glm::vec3 translation) {
+    model_matrix = glm::translate(model_matrix, translation);
+}
+
+void Model::scale(glm::vec3 scale) {
+    model_matrix = glm::scale(model_matrix, scale);
+}
+
+void Model::load_identity() {
+    model_matrix = glm::mat4(1.0f);
 }
 
 void Model::draw() {
