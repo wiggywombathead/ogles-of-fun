@@ -8,7 +8,7 @@ _OBJS = $(wildcard $(SRC)/*.cpp)
 OBJS = $(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(_OBJS))
 
 CFLAGS = -g -std=c++17 -I$(INC)
-LDFLAGS = -L/root/angle/out/Trace/ `pkg-config --static --libs egl glesv2`
+LDFLAGS = -L/home/thomas/angle/out/Trace/ `pkg-config --static --libs egl glesv2`
 
 DIRECTIVES = 
 

@@ -1,5 +1,7 @@
 #version 100
 
+precision highp float;
+
 attribute vec3 position;
 attribute vec3 color;
 attribute vec2 tex_coord;

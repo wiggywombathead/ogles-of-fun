@@ -59,7 +59,7 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     shader.use();
 
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0,0,5),
+            glm::vec3(0,1,6),
             glm::vec3(0,0,0),
             glm::vec3(0,1,0)
         );
@@ -68,16 +68,31 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
             glm::radians(45.0f),
             (float) screen_width / (float) screen_height,
             0.1f,
-            100.0f
+            1000.0f
         );
 
     glm::mat4 mvp;
 
     models[0].load_identity();
-    
-    float factor = time > 5.f ? 5.f : time;
-    models[0].translate(glm::vec3(0, 0, 0 - factor));
-    models[0].scale(glm::vec3(2.0f));
+
+    if (time < 2.0f) {
+        eglSwapBuffers(display, surface);
+        return;
+    }
+
+    /*
+    models[0].translate(glm::vec3(0, 0, -5));
+    models[0].scale(glm::vec3(100.0f));
+    mvp = projection * view * models[0].get_model_matrix();
+    shader.set_mat4("mvp", mvp);
+    models[0].draw();
+    */
+
+    float factor = time > 10.0f ? 10.0f : time;
+    models[0].translate(glm::vec3(0,0,0));
+    models[0].rotate(-80.f, glm::vec3(1,0,0));
+    models[0].scale(glm::vec3(500.0f));
+
     mvp = projection * view * models[0].get_model_matrix();
     shader.set_mat4("mvp", mvp);
     models[0].draw();
@@ -185,28 +200,28 @@ int main(int /*argc*/, char** /*argv*/) {
     }, "../tex/checkerboard.jpg");
 
     Model dickbutt({
-        { {-1.0f,  1.0f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
-        { {-1.0f,  0.0f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
-        { { 0.0f,  0.0f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
-
-        { { 0.0f,  0.0f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
-        { { 0.0f,  1.0f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
-        { {-1.0f,  1.0f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
-    }, "../tex/dickbutt.jpg");
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+        },
+        { 0, 1, 2, 2, 3, 0 },
+        "../tex/dickbutt.jpg"
+    );
 
     Model bricks({
-            { { 0.0f,  0.0f,  0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },    // top left
-            { { 0.0f, -1.0f,  0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },    // bottom left
-            { { 1.0f, -1.0f,  0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f} },    // bottom right
-            { { 1.0f,  0.0f,  0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f} },    // top right
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
         }, 
         { 0, 1, 2, 2, 3, 0 }, 
         "../tex/bricks.png"
     );
 
+    models.push_back(bricks);
     models.push_back(checkerboard);
     models.push_back(dickbutt);
-    models.push_back(bricks);
 
     Shader simple("simple.vert", "simple.frag");
     simple.bind_attrib(0, "position");
@@ -214,9 +229,7 @@ int main(int /*argc*/, char** /*argv*/) {
     simple.bind_attrib(2, "tex_coord");
     simple.link();
 
-    usleep(6000000);
-
-    for (;;) {
+    for (int i = 0; ; i++) {
 
         render(simple, display, surface);
 

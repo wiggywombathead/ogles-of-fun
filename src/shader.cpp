@@ -77,16 +77,23 @@ void Shader::set_mat4(std::string variable, glm::mat4 matrix) {
 
 void Shader::print_compile_status(GLenum shader_type) {
 
+    GLuint shader;
+    if (shader_type == GL_VERTEX_SHADER) 
+        shader = vertex_shader;
+    else if (shader_type == GL_FRAGMENT_SHADER)
+        shader = fragment_shader;
+
 	GLint is_compiled;
-	glGetShaderiv(handle, GL_COMPILE_STATUS, &is_compiled);
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
 
 	if (!is_compiled) {
 
 		int len, written;
-		glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &len);
+
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
 
         char log[len];
-		glGetShaderInfoLog(handle, len, &written, log);
+		glGetShaderInfoLog(shader, len, &written, log);
 
         std::string type_string;
         switch (shader_type) {
@@ -109,6 +116,7 @@ void Shader::print_link_status() {
 	glGetProgramiv(handle, GL_LINK_STATUS, &isLinked);
 
 	if (!isLinked) {
+        printf("Link bad");
 
 		int len, written;
 		glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &len);
@@ -116,7 +124,7 @@ void Shader::print_link_status() {
         char log[len];
 		glGetProgramInfoLog(handle, len, &written, log);
 
-		printf("%s", len > 1 ? log : "Failed to link shader program.");
+		printf("%s poopopoppo", len > 1 ? log : "Failed to link shader program.");
 	}
 
 }
