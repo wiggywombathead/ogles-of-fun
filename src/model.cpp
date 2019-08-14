@@ -70,21 +70,26 @@ GLuint Model::load_texture(const std::string filename) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-#ifdef USE_MIPMAPS
-    // minification, magnification filtering
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    GLint min, mag;
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 8);
-#else
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#if defined(MIP_TRILINEAR)
+    min = GL_LINEAR_MIPMAP_LINEAR;
+    mag = GL_LINEAR;
+#elif defined(MIP_BILINEAR)
+    min = GL_LINEAR_MIPMAP_NEAREST;
+    mag = GL_LINEAR;
+#elif defined(MIP_NONE)
+    min = GL_NEAREST;
+    mag = GL_NEAREST;
 #endif
+
+    // minification, magnification filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-#ifdef USE_MIPMAPS
+#if defined(MIP_BILINEAR) || defined(MIP_TRILINEAR)
     glGenerateMipmap(GL_TEXTURE_2D);
 #endif
 

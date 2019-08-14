@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -10,12 +11,14 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <unistd.h>
 #include "egl_init.hpp"
 #include "model.hpp"
 #include "shader.hpp"
 
+#define DEFAULT_FRAMES 200
+
 int screen_width, screen_height;
+int frames = DEFAULT_FRAMES;
 
 std::vector<Model> models;
 
@@ -59,7 +62,7 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     shader.use();
 
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0,1,6),
+            glm::vec3(0,2,10),
             glm::vec3(0,0,0),
             glm::vec3(0,1,0)
         );
@@ -72,8 +75,6 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
         );
 
     glm::mat4 mvp;
-
-    models[0].load_identity();
 
     if (time < 2.0f) {
         eglSwapBuffers(display, surface);
@@ -88,9 +89,11 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     models[0].draw();
     */
 
+    models[0].load_identity();
+
     float factor = time > 10.0f ? 10.0f : time;
     models[0].translate(glm::vec3(0,0,0));
-    models[0].rotate(-80.f, glm::vec3(1,0,0));
+    models[0].rotate(factor * -90.0f / 10.0f, glm::vec3(1,0,0));
     models[0].scale(glm::vec3(500.0f));
 
     mvp = projection * view * models[0].get_model_matrix();
@@ -166,7 +169,7 @@ GLuint create_framebuffer() {
     }
 }
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char *argv[]) {
 
     EGLDisplay display = NULL;
     EGLConfig config = NULL;
@@ -199,29 +202,29 @@ int main(int /*argc*/, char** /*argv*/) {
         { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} }     // top left
     }, "../tex/checkerboard.jpg");
 
-    Model dickbutt({
-        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
-        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
-        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
-        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
-        },
-        { 0, 1, 2, 2, 3, 0 },
-        "../tex/dickbutt.jpg"
-    );
+    // Model dickbutt({
+    //     { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+    //     { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+    //     { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+    //     { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+    //     },
+    //     { 0, 1, 2, 2, 3, 0 },
+    //     "../tex/dickbutt.jpg"
+    // );
 
-    Model bricks({
-        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
-        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
-        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
-        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
-        }, 
-        { 0, 1, 2, 2, 3, 0 }, 
-        "../tex/bricks.png"
-    );
+    // Model bricks({
+    //     { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+    //     { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+    //     { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+    //     { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+    //     }, 
+    //     { 0, 1, 2, 2, 3, 0 }, 
+    //     "../tex/bricks.png"
+    // );
 
-    models.push_back(bricks);
     models.push_back(checkerboard);
-    models.push_back(dickbutt);
+    // models.push_back(bricks);
+    // models.push_back(dickbutt);
 
     Shader simple("simple.vert", "simple.frag");
     simple.bind_attrib(0, "position");
@@ -229,13 +232,21 @@ int main(int /*argc*/, char** /*argv*/) {
     simple.bind_attrib(2, "tex_coord");
     simple.link();
 
-    for (int i = 0; ; i++) {
+    if (argc == 2) {
+        frames = strtol(argv[1], 0, 10);
+    }
+
+    printf("%d frames, coming up.\n", frames);
+
+    for (int i = 0; i < frames; i++) {
 
         render(simple, display, surface);
 
     }
 
 	destroy_state(vertex_shader, fragment_shader, shader_program, vertexBuffer);
+
+    puts("Done!");
 
     // TODO: clean up all buffers when done 
 

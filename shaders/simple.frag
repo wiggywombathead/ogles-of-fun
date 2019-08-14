@@ -9,6 +9,6 @@ uniform sampler2D tex_sampler;
 
 void main (void) {
     // fragOut = textureLod(tex_sampler, 25.0 * outTex, 7.0);
-    gl_FragColor = texture2D(tex_sampler, 50.0 * outTex);
+    gl_FragColor = texture2D(tex_sampler, 100.0 * outTex);
 }
 

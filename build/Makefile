@@ -12,8 +12,12 @@ LDFLAGS = -L/home/thomas/angle/out/Trace/ `pkg-config --static --libs egl glesv2
 
 DIRECTIVES = 
 
-ifeq ($(MIP),1)
-	DIRECTIVES += -DUSE_MIPMAPS
+ifeq ($(MIP),tri)
+	DIRECTIVES += -DMIP_TRILINEAR
+else ifeq ($(MIP),bi)
+	DIRECTIVES += -DMIP_BILINEAR
+else ifeq ($(MIP),none)
+	DIRECTIVES += -DMIP_NONE
 endif
 
 BIN = gltest
