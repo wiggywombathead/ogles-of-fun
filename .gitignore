@@ -1,3 +1,5 @@
 *.o
 *.swp
-gltest
+
+build/*
+!/build/Makefile
