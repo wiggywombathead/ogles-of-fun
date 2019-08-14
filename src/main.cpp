@@ -142,6 +142,8 @@ void gl_init() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDepthRangef(0.0f, 1.0f);
+
+    // TODO: why not compile? glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 GLuint create_framebuffer() {
@@ -154,9 +156,8 @@ GLuint create_framebuffer() {
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
     // glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, , screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-
+    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -167,6 +168,12 @@ GLuint create_framebuffer() {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
         
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void cleanup() {
+    // glDeleteFramebuffers(1,
 }
 
 int main(int argc, char *argv[]) {
@@ -192,6 +199,40 @@ int main(int argc, char *argv[]) {
 
     gl_init();
 
+    // create framebuffer
+    GLuint framebuffer;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);    
+
+    GLuint texture_color_buffer;
+    glGenTextures(1, &texture_color_buffer);
+    glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_color_buffer, 0);
+
+    GLuint render_buffer;
+    glGenRenderbuffers(1, &render_buffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, render_buffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, render_buffer);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        fputs("Framebuffer not complete", stderr);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    Model screen({
+        { {-1.0f,  1.0f,  0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },
+        { {-1.0f, -1.0f,  0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },
+        { { 1.0f, -1.0f,  0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 0.0f} },
+        { { 1.0f,  1.0f,  0.0f}, {0.0f, 0.0f, 0.0f}, {1.0f, 1.0f} }
+    }, (std::vector<uint16_t>) { 0, 1, 2, 2, 3, 0 });
+
     Model checkerboard({
         { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} },    // top left
         { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },    // bottom left
@@ -202,35 +243,60 @@ int main(int argc, char *argv[]) {
         { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f} }     // top left
     }, "../tex/checkerboard.jpg");
 
-    // Model dickbutt({
-    //     { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
-    //     { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
-    //     { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
-    //     { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
-    //     },
-    //     { 0, 1, 2, 2, 3, 0 },
-    //     "../tex/dickbutt.jpg"
-    // );
+    Model cube({
+        { {-0.5f,  0.5f, -0.5f}, {1.0f, 0.5f, 0.0f}, {0.0f, 0.0f} },
+        { {-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 0.5f}, {0.0f, 1.0f} },
+        { { 0.5f,  0.5f,  0.5f}, {0.5f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { { 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },
+        { {-0.5f, -0.5f, -0.5f}, {1.0f, 0.5f, 0.0f}, {0.0f, 0.0f} },
+        { {-0.5f, -0.5f,  0.5f}, {0.0f, 1.0f, 0.5f}, {0.0f, 1.0f} },
+        { { 0.5f, -0.5f,  0.5f}, {0.5f, 0.0f, 1.0f}, {1.0f, 1.0f} },
+        { { 0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} }
+    },
+    { 
+        0, 1, 2, 2, 3, 0,
+        1, 5, 6, 6, 2, 1,
+        2, 6, 7, 7, 3, 2,
+        3, 7, 4, 4, 0, 3,
+        0, 4, 5, 5, 1, 0,
+        5, 4, 7, 7, 6, 5
+    }, "../tex/planks.jpg");
 
-    // Model bricks({
-    //     { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
-    //     { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
-    //     { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
-    //     { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
-    //     }, 
-    //     { 0, 1, 2, 2, 3, 0 }, 
-    //     "../tex/bricks.png"
-    // );
+    Model dickbutt({
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+        },
+        { 0, 1, 2, 2, 3, 0 },
+        "../tex/dickbutt.jpg"
+    );
 
-    models.push_back(checkerboard);
+    Model bricks({
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+        }, 
+        { 0, 1, 2, 2, 3, 0 }, 
+        "../tex/bricks.png"
+    );
+
     // models.push_back(bricks);
+    models.push_back(checkerboard);
     // models.push_back(dickbutt);
 
-    Shader simple("simple.vert", "simple.frag");
-    simple.bind_attrib(0, "position");
-    simple.bind_attrib(1, "color");
-    simple.bind_attrib(2, "tex_coord");
-    simple.link();
+    Shader simple_shader("simple.vert", "simple.frag");
+    simple_shader.bind_attrib(0, "position");
+    simple_shader.bind_attrib(1, "color");
+    simple_shader.bind_attrib(2, "tex_coord");
+    simple_shader.link();
+
+    Shader screen_shader("rbuf.vert", "rbuf.frag");
+    screen_shader.bind_attrib(0, "position");
+    screen_shader.bind_attrib(1, "color");
+    screen_shader.bind_attrib(2, "tex_coord");
+    screen_shader.link();
 
     if (argc == 2) {
         frames = strtol(argv[1], 0, 10);
@@ -238,9 +304,63 @@ int main(int argc, char *argv[]) {
 
     printf("%d frames, coming up.\n", frames);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     for (int i = 0; i < frames; i++) {
 
-        render(simple, display, surface);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        simple_shader.use();
+
+        auto current = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
+
+        glm::mat4 view = glm::lookAt(
+                glm::vec3(0,2,10),
+                glm::vec3(0,0,0),
+                glm::vec3(0,1,0)
+                );
+
+        glm::mat4 projection = glm::perspective(
+                glm::radians(45.0f),
+                (float) screen_width / (float) screen_height,
+                0.1f,
+                1000.0f
+                );
+
+        glm::mat4 mvp;
+
+        if (time < 2.0f) {
+            eglSwapBuffers(display, surface);
+            continue;
+        }
+
+        models[0].load_identity();
+
+        float factor = time > 10.0f ? 10.0f : time;
+        models[0].translate(glm::vec3(0,0,0));
+        models[0].rotate(-90.0f, glm::vec3(1,0,0));
+        models[0].scale(glm::vec3(500.0f));
+
+        mvp = projection * view * models[0].get_model_matrix();
+        simple_shader.set_mat4("mvp", mvp);
+        models[0].draw();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);   // default framebuffer
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        screen_shader.use();
+        glDisable(GL_DEPTH_TEST);
+        glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
+        screen.draw();
+
+        if (!eglSwapBuffers(display, surface)) {
+            testEGLError("eglSwapBuffers");
+        }
 
     }
 

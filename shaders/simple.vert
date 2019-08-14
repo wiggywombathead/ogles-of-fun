@@ -17,4 +17,3 @@ void main(void) {
 
     gl_Position = mvp * vec4(position, 1.0);
 }
-

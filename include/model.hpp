@@ -19,6 +19,8 @@ private:
     GLuint texture;
 
     bool indexed = false;
+    bool textured = false;
+
     glm::mat4 model_matrix = glm::mat4(1.0f);
 
 public:

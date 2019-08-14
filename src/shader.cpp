@@ -83,8 +83,10 @@ void Shader::print_compile_status(GLenum shader_type) {
     else if (shader_type == GL_FRAGMENT_SHADER)
         shader = fragment_shader;
 
-	GLint is_compiled;
+	GLint is_compiled = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+
+    printf("is_compiled == %d\n", is_compiled);
 
 	if (!is_compiled) {
 
@@ -105,7 +107,7 @@ void Shader::print_compile_status(GLenum shader_type) {
             break;
         }
 
-		printf("%s shader failed to compile: %s\n", type_string.c_str(), log);
+		printf("WANK %s shader failed to compile: %s\n", type_string.c_str(), log);
 	}
 
 }
@@ -116,7 +118,6 @@ void Shader::print_link_status() {
 	glGetProgramiv(handle, GL_LINK_STATUS, &isLinked);
 
 	if (!isLinked) {
-        printf("Link bad");
 
 		int len, written;
 		glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &len);
@@ -124,7 +125,7 @@ void Shader::print_link_status() {
         char log[len];
 		glGetProgramInfoLog(handle, len, &written, log);
 
-		printf("%s poopopoppo", len > 1 ? log : "Failed to link shader program.");
+		printf("%s", len > 1 ? log : "Failed to link shader program.");
 	}
 
 }

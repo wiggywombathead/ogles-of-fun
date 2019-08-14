@@ -21,10 +21,12 @@ Model::Model(std::vector<Vertex> vertices, std::vector<uint16_t> indices) : Mode
 }
 
 Model::Model(std::vector<Vertex> vertices, std::string texpath) : Model(vertices) {
+    textured = true;
     texture = load_texture(texpath);
 }
 
 Model::Model(std::vector<Vertex> vertices, std::vector<uint16_t> indices, std::string texpath) : Model(vertices, indices) {
+    textured = true;
     texture = load_texture(texpath);
 }
 
@@ -81,6 +83,9 @@ GLuint Model::load_texture(const std::string filename) {
 #elif defined(MIP_NONE)
     min = GL_NEAREST;
     mag = GL_NEAREST;
+#else 
+    min = GL_NEAREST;
+    mag = GL_NEAREST;
 #endif
 
     // minification, magnification filtering
@@ -90,7 +95,8 @@ GLuint Model::load_texture(const std::string filename) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
 #if defined(MIP_BILINEAR) || defined(MIP_TRILINEAR)
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (textured)
+        glGenerateMipmap(GL_TEXTURE_2D);
 #endif
 
     stbi_image_free(pixels);
@@ -120,8 +126,11 @@ void Model::load_identity() {
 
 void Model::draw() {
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    if (textured) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+    }
+
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 
     // position
