@@ -81,14 +81,6 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
         return;
     }
 
-    /*
-    models[0].translate(glm::vec3(0, 0, -5));
-    models[0].scale(glm::vec3(100.0f));
-    mvp = projection * view * models[0].get_model_matrix();
-    shader.set_mat4("mvp", mvp);
-    models[0].draw();
-    */
-
     models[0].load_identity();
 
     float factor = time > 10.0f ? 10.0f : time;
@@ -101,19 +93,6 @@ void render(Shader shader, EGLDisplay display, EGLSurface surface) {
     models[0].draw();
 
     /*
-    models[1].load_identity();
-    models[1].rotate(time * 45.0f, glm::vec3(1,0,0));
-    mvp = projection * view * models[1].get_model_matrix();
-    shader.set_mat4("mvp", mvp);
-    models[1].draw();
-
-    models[2].load_identity();
-    models[2].scale(glm::vec3(0.5f));
-    models[2].translate(glm::vec3(0+sinf(time), 0+cosf(time), 0));
-    mvp = projection * view * models[2].get_model_matrix();
-    shader.set_mat4("mvp", mvp);
-    models[2].draw();
-
     for (auto model : models) {
         model.draw();
     }
@@ -282,8 +261,8 @@ int main(int argc, char *argv[]) {
         "../tex/bricks.png"
     );
 
-    // models.push_back(bricks);
-    models.push_back(checkerboard);
+    models.push_back(bricks);
+    // models.push_back(checkerboard);
     // models.push_back(dickbutt);
 
     Shader simple_shader("simple.vert", "simple.frag");
@@ -319,7 +298,7 @@ int main(int argc, char *argv[]) {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
         glm::mat4 view = glm::lookAt(
-                glm::vec3(0,2,10),
+                glm::vec3(0,0,10),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
@@ -342,7 +321,7 @@ int main(int argc, char *argv[]) {
 
         float factor = time > 10.0f ? 10.0f : time;
         models[0].translate(glm::vec3(0,0,0));
-        models[0].rotate(-90.0f, glm::vec3(1,0,0));
+        // models[0].rotate(-90.0f, glm::vec3(1,0,0));
         models[0].scale(glm::vec3(500.0f));
 
         mvp = projection * view * models[0].get_model_matrix();

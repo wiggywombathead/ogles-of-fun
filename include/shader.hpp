@@ -14,7 +14,7 @@ private:
 public:
     /* initialisation */
     Shader(std::string vs, std::string fs);
-    GLuint load_shader(const std::string &, GLenum shader_type);
+    GLuint load_shader(const std::string, GLenum shader_type);
     void bind_attrib(GLuint index, const GLchar *name);
     void link();
     void use();
@@ -23,7 +23,7 @@ public:
     void set_mat4(std::string, glm::mat4);
 
     /* util */
-    void print_compile_status(GLenum shader_type);
+    void print_compile_status(GLuint shader, std::string filename);
     void print_link_status();
 };
 

@@ -39,7 +39,7 @@ std::vector<char> read_shader(const std::string &filename) {
     return buffer;
 }
 
-GLuint Shader::load_shader(const std::string &filename, GLenum shader_type) {
+GLuint Shader::load_shader(const std::string filename, GLenum shader_type) {
 
     GLuint shader = glCreateShader(shader_type);
 
@@ -51,7 +51,7 @@ GLuint Shader::load_shader(const std::string &filename, GLenum shader_type) {
     glShaderSource(shader, 1, &char_array, &length);
     glCompileShader(shader);
 
-    print_compile_status(shader_type);
+    print_compile_status(shader, filename);
 
     return shader;
 }
@@ -75,20 +75,12 @@ void Shader::set_mat4(std::string variable, glm::mat4 matrix) {
     glUniformMatrix4fv(matrix_handle, 1, GL_FALSE, glm::value_ptr(matrix));
 }
 
-void Shader::print_compile_status(GLenum shader_type) {
-
-    GLuint shader;
-    if (shader_type == GL_VERTEX_SHADER) 
-        shader = vertex_shader;
-    else if (shader_type == GL_FRAGMENT_SHADER)
-        shader = fragment_shader;
+void Shader::print_compile_status(GLuint shader, std::string filename) {
 
 	GLint is_compiled = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
 
-    printf("is_compiled == %d\n", is_compiled);
-
-	if (!is_compiled) {
+	if (is_compiled == GL_FALSE) {
 
 		int len, written;
 
@@ -97,17 +89,7 @@ void Shader::print_compile_status(GLenum shader_type) {
         char log[len];
 		glGetShaderInfoLog(shader, len, &written, log);
 
-        std::string type_string;
-        switch (shader_type) {
-        case GL_VERTEX_SHADER:
-            type_string = "vertex";
-            break;
-        case GL_FRAGMENT_SHADER:
-            type_string = "fragment";
-            break;
-        }
-
-		printf("WANK %s shader failed to compile: %s\n", type_string.c_str(), log);
+		printf("%s: %s\n", filename.c_str(), log);
 	}
 
 }

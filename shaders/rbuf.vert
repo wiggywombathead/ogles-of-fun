@@ -1,11 +1,11 @@
-#version 300
+#version 300 es
 
 precision highp float;
 
-attribute vec3 position;
-attribute vec2 tex_coord;
+layout (location = 0) in vec3 position;
+layout (location = 2) in vec2 tex_coord;
 
-varying vec2 outTex;
+out vec2 outTex;
 
 void main(void) {
     outTex = tex_coord;

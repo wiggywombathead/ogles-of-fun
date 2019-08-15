@@ -1,13 +1,13 @@
-#version 100
+#version 300 es
 
 precision highp float;
 
-attribute vec3 position;
-attribute vec3 color;
-attribute vec2 tex_coord;
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 color;
+layout (location = 2) in vec2 tex_coord;
 
-varying vec3 outColor;
-varying vec2 outTex;
+out vec3 outColor;
+out vec2 outTex;
 
 uniform mat4 mvp;
 

@@ -80,7 +80,7 @@ bool setupEGLContext(EGLDisplay display, EGLConfig eglConfig, EGLSurface eglSurf
         return false;
 
 	EGLint contextAttributes[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 2,
+		EGL_CONTEXT_CLIENT_VERSION, 3,
 		EGL_NONE
 	};
 

@@ -1,13 +1,15 @@
-#version 100
+#version 300 es
 
 precision highp float;
 
-varying vec3 outColor;
-varying vec2 outTex;
+in vec3 outColor;
+in vec2 outTex;
+
+out vec4 fragColor;
 
 uniform sampler2D tex_sampler;
 
 void main (void) {
     // fragOut = textureLod(tex_sampler, 25.0 * outTex, 7.0);
-    gl_FragColor = texture2D(tex_sampler, 100.0 * outTex);
+    fragColor = texture(tex_sampler, 100.0 * outTex);
 }
