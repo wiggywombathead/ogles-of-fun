@@ -271,11 +271,11 @@ int main(int argc, char *argv[]) {
     simple_shader.bind_attrib(2, "tex_coord");
     simple_shader.link();
 
-    Shader screen_shader("rbuf.vert", "rbuf.frag");
-    screen_shader.bind_attrib(0, "position");
-    screen_shader.bind_attrib(1, "color");
-    screen_shader.bind_attrib(2, "tex_coord");
-    screen_shader.link();
+    Shader pp_shader("postprocessing.vert", "postprocessing.frag");
+    pp_shader.bind_attrib(0, "position");
+    pp_shader.bind_attrib(1, "color");
+    pp_shader.bind_attrib(2, "tex_coord");
+    pp_shader.link();
 
     if (argc == 2) {
         frames = strtol(argv[1], 0, 10);
@@ -298,7 +298,7 @@ int main(int argc, char *argv[]) {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
         glm::mat4 view = glm::lookAt(
-                glm::vec3(0,0,10),
+                glm::vec3(0,2,10),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) {
 
         float factor = time > 10.0f ? 10.0f : time;
         models[0].translate(glm::vec3(0,0,0));
-        // models[0].rotate(-90.0f, glm::vec3(1,0,0));
+        models[0].rotate(-90.0f, glm::vec3(1,0,0));
         models[0].scale(glm::vec3(500.0f));
 
         mvp = projection * view * models[0].get_model_matrix();
@@ -332,7 +332,7 @@ int main(int argc, char *argv[]) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        screen_shader.use();
+        pp_shader.use();
         glDisable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
         screen.draw();
