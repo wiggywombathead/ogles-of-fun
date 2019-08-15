@@ -22,88 +22,6 @@ int frames = DEFAULT_FRAMES;
 
 std::vector<Model> models;
 
-/*
-bool initializeShaders(GLuint& vertex_shader, GLuint &fragment_shader, GLuint& shader_program) {
-
-    std::string vshader_path = base + "shaders/simple.vert";
-    std::string fshader_path = base + "shaders/simple.frag";
-
-    vertex_shader = load_shader(vshader_path, GL_VERTEX_SHADER);
-    fragment_shader = load_shader(fshader_path, GL_FRAGMENT_SHADER);
-
-	shader_program = glCreateProgram();
-
-	glAttachShader(shader_program, vertex_shader);
-	glAttachShader(shader_program, fragment_shader);
-
-    print_program_status(shader_program);
-
-	glUseProgram(shader_program);
-
-	if (!testGLError("glUseProgram")) {
-        return false;
-    }
-
-	return true;
-}
-*/
-
-void render(Shader shader, EGLDisplay display, EGLSurface surface) {
-
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    static auto start = std::chrono::high_resolution_clock::now();
-    auto current = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    shader.use();
-
-    glm::mat4 view = glm::lookAt(
-            glm::vec3(0,2,10),
-            glm::vec3(0,0,0),
-            glm::vec3(0,1,0)
-        );
-
-    glm::mat4 projection = glm::perspective(
-            glm::radians(45.0f),
-            (float) screen_width / (float) screen_height,
-            0.1f,
-            1000.0f
-        );
-
-    glm::mat4 mvp;
-
-    if (time < 2.0f) {
-        eglSwapBuffers(display, surface);
-        return;
-    }
-
-    models[0].load_identity();
-
-    float factor = time > 10.0f ? 10.0f : time;
-    models[0].translate(glm::vec3(0,0,0));
-    models[0].rotate(factor * -90.0f / 10.0f, glm::vec3(1,0,0));
-    models[0].scale(glm::vec3(500.0f));
-
-    mvp = projection * view * models[0].get_model_matrix();
-    shader.set_mat4("mvp", mvp);
-    models[0].draw();
-
-    /*
-    for (auto model : models) {
-        model.draw();
-    }
-    */
-
-    if (!eglSwapBuffers(display, surface)) {
-        testEGLError("eglSwapBuffers");
-    }
-
-}
-
 void destroy_state(GLuint vertex_shader, GLuint fragment_shader, GLuint shader_program, GLuint vertexBuffer) {
 
 	glDeleteShader(fragment_shader);
@@ -261,7 +179,18 @@ int main(int argc, char *argv[]) {
         "../tex/bricks.png"
     );
 
+    Model passion({
+        { {-0.5f,  0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f} },    // top left
+        { {-0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f} },    // bottom left
+        { { 0.5f, -0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f} },    // bottom right
+        { { 0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f} },    // top right
+        }, 
+        { 0, 1, 2, 2, 3, 0 }, 
+        "../tex/passion.jpg"
+    );
+
     models.push_back(bricks);
+    models.push_back(cube);
     // models.push_back(checkerboard);
     // models.push_back(dickbutt);
 
@@ -298,7 +227,7 @@ int main(int argc, char *argv[]) {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
         glm::mat4 view = glm::lookAt(
-                glm::vec3(0,2,10),
+                glm::vec3(0,0,10),
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
@@ -312,21 +241,23 @@ int main(int argc, char *argv[]) {
 
         glm::mat4 mvp;
 
-        if (time < 2.0f) {
-            eglSwapBuffers(display, surface);
-            continue;
-        }
-
-        models[0].load_identity();
-
-        float factor = time > 10.0f ? 10.0f : time;
-        models[0].translate(glm::vec3(0,0,0));
-        models[0].rotate(-90.0f, glm::vec3(1,0,0));
-        models[0].scale(glm::vec3(500.0f));
-
-        mvp = projection * view * models[0].get_model_matrix();
+        passion.load_identity();
+        passion.translate(glm::vec3(0));
+        passion.rotate(time * -90.0f, glm::vec3(0,0,1));
+        passion.scale(glm::vec3(5.0f));
+        mvp = projection * view * passion.get_model_matrix();
         simple_shader.set_mat4("mvp", mvp);
-        models[0].draw();
+        simple_shader.set_float("tex_scale", 1.0);
+        passion.draw();
+
+        // cube.load_identity();
+        // cube.translate(glm::vec3(0));
+        // cube.rotate(-90.0f, glm::vec3(1,0,0));
+        // cube.scale(2.0f);
+        // mvp = projection * view * cube.get_model_matrix();
+        // simple_shader.set_mat4("mvp", mvp);
+        // simple_shader.set_float("tex_scale", 1.0);
+        // cube.draw();
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);   // default framebuffer
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -335,6 +266,8 @@ int main(int argc, char *argv[]) {
         pp_shader.use();
         glDisable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, texture_color_buffer);
+        
+        pp_shader.set_float("time", time);
         screen.draw();
 
         if (!eglSwapBuffers(display, surface)) {

@@ -40,6 +40,7 @@ public:
     void rotate(float, glm::vec3);
     void translate(glm::vec3);
     void scale(glm::vec3);
+    void scale(float);
 
     void draw();
 };

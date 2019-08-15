@@ -120,6 +120,10 @@ void Model::scale(glm::vec3 scale) {
     model_matrix = glm::scale(model_matrix, scale);
 }
 
+void Model::scale(float scale) {
+    model_matrix = glm::scale(model_matrix, glm::vec3(scale));
+}
+
 void Model::load_identity() {
     model_matrix = glm::mat4(1.0f);
 }

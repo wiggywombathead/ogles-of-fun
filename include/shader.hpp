@@ -8,7 +8,7 @@
 
 class Shader {
 private:
-    GLuint handle;
+    GLuint program;
     GLuint vertex_shader, fragment_shader;
 
 public:
@@ -21,6 +21,8 @@ public:
 
     /* set values in shader */
     void set_mat4(std::string, glm::mat4);
+    void set_float(std::string, float);
+    void set_bool(std::string, bool);
 
     /* util */
     void print_compile_status(GLuint shader, std::string filename);

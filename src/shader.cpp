@@ -13,10 +13,10 @@ Shader::Shader(std::string vs, std::string fs) {
     vertex_shader = load_shader(base + vs, GL_VERTEX_SHADER);
     fragment_shader = load_shader(base + fs, GL_FRAGMENT_SHADER);
 
-    handle = glCreateProgram();
+    program = glCreateProgram();
 
-	glAttachShader(handle, vertex_shader);
-	glAttachShader(handle, fragment_shader);
+	glAttachShader(program, vertex_shader);
+	glAttachShader(program, fragment_shader);
 }
 
 std::vector<char> read_shader(const std::string &filename) {
@@ -57,22 +57,32 @@ GLuint Shader::load_shader(const std::string filename, GLenum shader_type) {
 }
 
 void Shader::bind_attrib(GLuint index, const GLchar *name) {
-    glBindAttribLocation(handle, index, name);
+    glBindAttribLocation(program, index, name);
 }
 
 void Shader::link() {
-    glLinkProgram(handle);
+    glLinkProgram(program);
 
     print_link_status();
 }
 
 void Shader::use() {
-    glUseProgram(handle);
+    glUseProgram(program);
 }
 
 void Shader::set_mat4(std::string variable, glm::mat4 matrix) {
-    GLint matrix_handle = glGetUniformLocation(handle, variable.c_str());
-    glUniformMatrix4fv(matrix_handle, 1, GL_FALSE, glm::value_ptr(matrix));
+    GLint handle = glGetUniformLocation(program, variable.c_str());
+    glUniformMatrix4fv(handle, 1, GL_FALSE, glm::value_ptr(matrix));
+}
+
+void Shader::set_float(std::string variable, float value) {
+    GLint handle = glGetUniformLocation(program, variable.c_str());
+    glUniform1f(handle, value);
+}
+
+void Shader::set_bool(std::string variable, bool value) {
+    GLint handle = glGetUniformLocation(program, variable.c_str());
+    glUniform1i(handle, value);
 }
 
 void Shader::print_compile_status(GLuint shader, std::string filename) {
@@ -97,15 +107,15 @@ void Shader::print_compile_status(GLuint shader, std::string filename) {
 void Shader::print_link_status() {
 
 	GLint isLinked;
-	glGetProgramiv(handle, GL_LINK_STATUS, &isLinked);
+	glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
 
 	if (!isLinked) {
 
 		int len, written;
-		glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &len);
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
 
         char log[len];
-		glGetProgramInfoLog(handle, len, &written, log);
+		glGetProgramInfoLog(program, len, &written, log);
 
 		printf("%s", len > 1 ? log : "Failed to link shader program.");
 	}
