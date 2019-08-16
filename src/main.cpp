@@ -162,21 +162,9 @@ int main(int argc, char *argv[]) {
     });
 
     Shader simple_shader("simple.vert", "simple.frag");
-    simple_shader.bind_attrib(0, "position");
-    simple_shader.bind_attrib(1, "color");
-    simple_shader.bind_attrib(2, "tex_coord");
-
     Shader lighting_shader("lighting.vert", "lighting.frag");
-    lighting_shader.bind_attrib(0, "position");
-    lighting_shader.bind_attrib(3, "normal");
-
     Shader light_shader("light.vert", "light.frag");
-    light_shader.bind_attrib(0, "position");
-
     Shader pp_shader("postprocessing.vert", "postprocessing.frag");
-    pp_shader.bind_attrib(0, "position");
-    pp_shader.bind_attrib(1, "color");
-    pp_shader.bind_attrib(2, "tex_coord");
 
     if (argc == 2) {
         frames = strtol(argv[1], 0, 10);
@@ -188,6 +176,7 @@ int main(int argc, char *argv[]) {
 
     glm::vec3 light_pos = glm::vec3(1.0f);
     glm::vec3 light_col = glm::vec3(1.0f);
+    glm::vec3 eye_position = glm::vec3(0, 1, 5);
 
     for (int i = 0; i < frames; i++) {
 
@@ -201,7 +190,7 @@ int main(int argc, char *argv[]) {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(current - start).count();
 
         glm::mat4 view = glm::lookAt(
-                glm::vec3(0,1,5),
+                eye_position,
                 glm::vec3(0,0,0),
                 glm::vec3(0,1,0)
                 );
@@ -215,11 +204,17 @@ int main(int argc, char *argv[]) {
 
         glm::mat4 mvp;
 
+        light_pos = glm::vec3(
+                sinf(time),
+                0.0f,
+                1.5f
+            );
+
         light_shader.use();
 
         light.load_identity();
         light.translate(light_pos);
-        light.scale(0.5f);
+        light.scale(0.25f);
         mvp = projection * view * light.get_model_matrix();
         light_shader.set_vec3("light_color", light_col);
         light_shader.set_mat4("mvp", mvp);
@@ -233,6 +228,8 @@ int main(int argc, char *argv[]) {
         lighting_shader.set_vec3("light_position", light_pos);
         lighting_shader.set_vec3("light_color", light_col);
         lighting_shader.set_vec3("object_color", glm::vec3(1.0f, 0.5f, 0.31f));
+        lighting_shader.set_vec3("eye_position", eye_position);
+
         lighting_shader.set_mat4("model", cube.get_model_matrix());
         lighting_shader.set_mat4("mvp", mvp);
         cube.draw();
