@@ -17,6 +17,12 @@ Shader::Shader(std::string vs, std::string fs) {
 
 	glAttachShader(program, vertex_shader);
 	glAttachShader(program, fragment_shader);
+
+    glLinkProgram(program);
+
+    if (!is_linked()) {
+        print_link_error();
+    }
 }
 
 std::vector<char> read_shader(const std::string &filename) {
@@ -51,33 +57,33 @@ GLuint Shader::load_shader(const std::string filename, GLenum shader_type) {
     glShaderSource(shader, 1, &char_array, &length);
     glCompileShader(shader);
 
-    print_compile_status(shader, filename);
+    if (!is_compiled(shader)) {
+        print_compile_error(shader, filename);
+    }
 
     return shader;
+}
+
+bool Shader::is_compiled(GLuint shader) {
+	GLint is_compiled = 0;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
+
+	return (is_compiled == GL_TRUE);
+}
+
+bool Shader::is_linked() {
+	GLint is_linked;
+	glGetProgramiv(program, GL_LINK_STATUS, &is_linked);
+
+    return (is_linked == GL_TRUE);
 }
 
 void Shader::bind_attrib(GLuint index, const GLchar *name) {
     glBindAttribLocation(program, index, name);
 }
 
-void Shader::link() {
-    glLinkProgram(program);
-
-    print_link_status();
-}
-
 void Shader::use() {
     glUseProgram(program);
-}
-
-void Shader::set_mat4(std::string variable, glm::mat4 matrix) {
-    GLint handle = glGetUniformLocation(program, variable.c_str());
-    glUniformMatrix4fv(handle, 1, GL_FALSE, glm::value_ptr(matrix));
-}
-
-void Shader::set_float(std::string variable, float value) {
-    GLint handle = glGetUniformLocation(program, variable.c_str());
-    glUniform1f(handle, value);
 }
 
 void Shader::set_bool(std::string variable, bool value) {
@@ -85,40 +91,38 @@ void Shader::set_bool(std::string variable, bool value) {
     glUniform1i(handle, value);
 }
 
-void Shader::print_compile_status(GLuint shader, std::string filename) {
-
-	GLint is_compiled = 0;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &is_compiled);
-
-	if (is_compiled == GL_FALSE) {
-
-		int len, written;
-
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-
-        char log[len];
-		glGetShaderInfoLog(shader, len, &written, log);
-
-		printf("%s: %s\n", filename.c_str(), log);
-	}
-
+void Shader::set_float(std::string variable, float value) {
+    GLint handle = glGetUniformLocation(program, variable.c_str());
+    glUniform1f(handle, value);
 }
 
-void Shader::print_link_status() {
-
-	GLint isLinked;
-	glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
-
-	if (!isLinked) {
-
-		int len, written;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
-
-        char log[len];
-		glGetProgramInfoLog(program, len, &written, log);
-
-		printf("%s", len > 1 ? log : "Failed to link shader program.");
-	}
-
+void Shader::set_vec3(std::string variable, glm::vec3 value) {
+    GLint handle = glGetUniformLocation(program, variable.c_str());
+    glUniform3fv(handle, 1, glm::value_ptr(value));
 }
 
+void Shader::set_mat4(std::string variable, glm::mat4 matrix) {
+    GLint handle = glGetUniformLocation(program, variable.c_str());
+    glUniformMatrix4fv(handle, 1, GL_FALSE, glm::value_ptr(matrix));
+}
+
+void Shader::print_compile_error(GLuint shader, std::string filename) {
+    int len, written;
+
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+
+    char log[len];
+    glGetShaderInfoLog(shader, len, &written, log);
+
+    printf("%s: %s\n", filename.c_str(), log);
+}
+
+void Shader::print_link_error() {
+    int len, written;
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
+
+    char log[len];
+    glGetProgramInfoLog(program, len, &written, log);
+
+    printf("%s", len > 1 ? log : "Failed to link shader program.");
+}

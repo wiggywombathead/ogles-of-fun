@@ -149,6 +149,10 @@ void Model::draw() {
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) (offsetof(Vertex, texcoord)));
 
+    // normal
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) (offsetof(Vertex, normal)));
+
     if (indexed) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, 0);
