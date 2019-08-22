@@ -6,6 +6,10 @@
 #include <iostream>
 #include <vector>
 
+Shader::Shader() {
+
+}
+
 Shader::Shader(std::string vs, std::string fs) {
 
     std::string base = "../shaders/";

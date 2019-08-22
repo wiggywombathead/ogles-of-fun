@@ -13,6 +13,7 @@ private:
 
 public:
     /* initialisation */
+    Shader();
     Shader(std::string vs, std::string fs);
     GLuint load_shader(const std::string, GLenum shader_type);
 

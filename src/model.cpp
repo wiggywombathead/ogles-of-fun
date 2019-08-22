@@ -159,4 +159,6 @@ void Model::draw() {
     } else {
         glDrawArrays(GL_TRIANGLES, 0, mesh.size());
     }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

@@ -1,6 +1,6 @@
 #version 300 es
 
-precision highp float;
+precision lowp float;
 
 in vec3 outColor;
 in vec2 outTex;
