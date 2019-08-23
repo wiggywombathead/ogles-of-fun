@@ -1,11 +1,6 @@
 #version 300 es
 
-/**
- * @file: simple.frag
- * fragment shader for color & texturing
- */
-
-precision highp float;
+precision lowp float;
 
 in vec3 outColor;
 in vec2 outTex;

@@ -25,8 +25,6 @@ enum {
 };
 
 int screen_width, screen_height;
-int frames = DEFAULT_FRAMES;
-int shader_version = ESSL_VERSION_300;
 
 std::vector<Model> models;
 
@@ -209,11 +207,23 @@ int main(int argc, char *argv[]) {
         5, 4, 7, 7, 6, 5
     });
 
+    int shader_version = ESSL_VERSION_300;
+    int frames = DEFAULT_FRAMES;
+    bool endless = false;
+
     int opt;
     while ((opt = getopt(argc, argv, "f:v:")) != -1) {
         switch (opt) {
         case 'f':
             frames = strtol(optarg, 0, 10);
+
+            if (frames < 1) {
+                endless = true;
+                puts("Unlimited frames, coming up.");
+            } else {
+                printf("%d frames, coming up.\n", frames);
+            }
+
             break;
         case 'v':
             shader_version = strtol(optarg, 0, 10);
@@ -239,8 +249,6 @@ int main(int argc, char *argv[]) {
             break;
         }
     }
-
-    printf("%d frames, coming up.\n", frames);
 
     Shader simple_shader;
     if (shader_version == ESSL_VERSION_100) {
@@ -269,7 +277,7 @@ int main(int argc, char *argv[]) {
 
     float near_plane = 0.1f, far_plane = 10.0f;
 
-    for (int i = 0; i < frames; i++) {
+    for (int i = 0; endless ? : i < frames; i++) {
 
         /*
         glm::mat4 light_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
