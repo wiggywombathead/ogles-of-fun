@@ -4,6 +4,7 @@
 #include <stb_image.h>
 
 // #include <GL/glext.h>   // for GL_TEXTURE_BASE_LEVEL
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
 #include <cstdint>

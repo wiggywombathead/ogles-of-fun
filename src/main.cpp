@@ -64,8 +64,9 @@ int main(int argc, char *argv[]) {
 
     if (!egl_init(display, config, surface, context)) {
         egl_cleanup(display);
+        fputs("Unable to initialise EGL", stderr);
+        exit(EXIT_FAILURE);
     }
-
 
     printf("GLES version: %s\nShading Language version: %s\n",
             glGetString(GL_VERSION),

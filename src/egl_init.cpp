@@ -49,6 +49,7 @@ bool chooseEGLConfig(EGLDisplay display, EGLConfig& eglConfig) {
         EGL_GREEN_SIZE,         8,
         EGL_BLUE_SIZE,          8,
         EGL_DEPTH_SIZE,         24,
+
         EGL_SURFACE_TYPE,		EGL_WINDOW_BIT,
         EGL_RENDERABLE_TYPE,	EGL_OPENGL_ES2_BIT,
         EGL_NONE
@@ -67,8 +68,9 @@ bool createEGLSurface(EGLDisplay display, EGLConfig eglConfig, EGLSurface& eglSu
 
 	eglSurface = eglCreateWindowSurface(display, eglConfig, (EGLNativeWindowType) 0, NULL);
 
-	if (!testEGLError("eglCreateWindowSurface"))
+	if (!testEGLError("eglCreateWindowSurface")) {
         return false;
+    }
 
 	return true;
 }
@@ -80,18 +82,20 @@ bool setupEGLContext(EGLDisplay display, EGLConfig eglConfig, EGLSurface eglSurf
         return false;
 
 	EGLint contextAttributes[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 3,
+		EGL_CONTEXT_CLIENT_VERSION, 2,
 		EGL_NONE
 	};
 
 	context = eglCreateContext(display, eglConfig, NULL, contextAttributes);
-	if (!testEGLError("eglCreateContext"))
+	if (!testEGLError("eglCreateContext")) {
         return false;
+    }
 
 	eglMakeCurrent(display, eglSurface, eglSurface, context);
 	
-	if (!testEGLError("eglMakeCurrent"))
+	if (!testEGLError("eglMakeCurrent")) {
         return false;
+    }
 
 	return true;
 }
